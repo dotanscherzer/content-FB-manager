@@ -14,6 +14,17 @@ export const getEmails = async (req, res) => {
     const total = await Email.countDocuments();
 
     console.log(`Found ${emails.length} emails out of ${total} total`);
+    
+    // Log sample email data for debugging
+    if (emails.length > 0) {
+      console.log('Sample email:', {
+        id: emails[0]._id,
+        hasBody: !!emails[0].body,
+        hasHtmlBody: !!emails[0].html_body,
+        bodyLength: emails[0].body?.length || 0,
+        htmlBodyLength: emails[0].html_body?.length || 0
+      });
+    }
 
     res.json({
       data: emails,

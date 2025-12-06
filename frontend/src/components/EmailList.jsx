@@ -68,30 +68,71 @@ const EmailList = () => {
               <p><strong>נשלח ב:</strong> {email.sent_at ? new Date(email.sent_at).toLocaleString('he-IL') : 'לא זמין'}</p>
               <p><strong>נוצר ב:</strong> {email.created_at ? new Date(email.created_at).toLocaleString('he-IL') : 'לא זמין'}</p>
             </div>
-            {(email.body || email.html_body) && (
-              <div className="email-body">
-                {email.html_body ? (
-                  <div 
-                    className="email-html-body"
-                    dangerouslySetInnerHTML={{ __html: email.html_body.substring(0, 500) + '...' }}
-                  />
-                ) : (
-                  <div className="email-text-body">
-                    {email.body
-                      .replace(/&zwnj;/g, ' ')
-                      .replace(/&nbsp;/g, ' ')
-                      .replace(/&amp;/g, '&')
-                      .replace(/&lt;/g, '<')
-                      .replace(/&gt;/g, '>')
-                      .replace(/&quot;/g, '"')
-                      .replace(/&#39;/g, "'")
-                      .trim()
-                      .substring(0, 200)}
-                    {email.body.length > 200 && '...'}
+            {(() => {
+              // Check if we have any content to display
+              const rawBody = email.body || '';
+              const rawHtmlBody = email.html_body || '';
+              const hasHtmlBody = rawHtmlBody.trim().length > 0;
+              const hasBody = rawBody.trim().length > 0;
+              
+              // Prefer HTML body if available
+              if (hasHtmlBody) {
+                // Only show preview if HTML body is meaningful
+                const htmlPreview = rawHtmlBody.length > 50 
+                  ? rawHtmlBody.substring(0, 500) + '...' 
+                  : rawHtmlBody;
+                return (
+                  <div className="email-body">
+                    <div 
+                      className="email-html-body"
+                      dangerouslySetInnerHTML={{ __html: htmlPreview }}
+                    />
                   </div>
-                )}
-              </div>
-            )}
+                );
+              } 
+              
+              // Fallback to text body
+              if (hasBody) {
+                // Clean HTML entities but keep content
+                let cleanedBody = rawBody
+                  .replace(/&zwnj;/g, ' ')
+                  .replace(/&nbsp;/g, ' ')
+                  .replace(/&amp;/g, '&')
+                  .replace(/&lt;/g, '<')
+                  .replace(/&gt;/g, '>')
+                  .replace(/&quot;/g, '"')
+                  .replace(/&#39;/g, "'")
+                  .replace(/&[a-z]+;/gi, ' ') // Remove any remaining HTML entities
+                  .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+                  .trim();
+                
+                // Show content even if it's mostly whitespace (after cleaning)
+                if (cleanedBody.length > 0) {
+                  const preview = cleanedBody.length > 200 
+                    ? cleanedBody.substring(0, 200) + '...' 
+                    : cleanedBody;
+                  return (
+                    <div className="email-body">
+                      <div className="email-text-body">
+                        {preview}
+                      </div>
+                    </div>
+                  );
+                } else {
+                  // Show a message if body exists but is empty after cleaning
+                  return (
+                    <div className="email-body">
+                      <div className="email-text-body" style={{ fontStyle: 'italic', color: '#999' }}>
+                        (תוכן האימייל ריק או מכיל רק HTML entities)
+                      </div>
+                    </div>
+                  );
+                }
+              }
+              
+              // No content at all
+              return null;
+            })()}
           </div>
           ))}
         </div>
