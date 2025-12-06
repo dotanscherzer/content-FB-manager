@@ -77,24 +77,50 @@ const EmailList = () => {
               
               // Prefer HTML body if available
               if (hasHtmlBody) {
-                // Extract text content from HTML for preview (first 300 chars)
+                // Remove style, script, head tags and comments before extracting text
+                let cleanHtml = rawHtmlBody
+                  .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                  .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+                  .replace(/<!--[\s\S]*?-->/g, '')
+                  .replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '')
+                  .replace(/<meta[^>]*>/gi, '')
+                  .replace(/<link[^>]*>/gi, '');
+                
+                // Extract text content from cleaned HTML
                 const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = rawHtmlBody.substring(0, 1000);
-                const textContent = tempDiv.textContent || tempDiv.innerText || '';
-                const previewText = textContent.substring(0, 200).trim();
+                tempDiv.innerHTML = cleanHtml;
+                let textContent = tempDiv.textContent || tempDiv.innerText || '';
+                
+                // Clean up the extracted text - remove HTML entities and normalize whitespace
+                textContent = textContent
+                  .replace(/&zwnj;/g, ' ')
+                  .replace(/&nbsp;/g, ' ')
+                  .replace(/&amp;/g, '&')
+                  .replace(/&lt;/g, '<')
+                  .replace(/&gt;/g, '>')
+                  .replace(/&quot;/g, '"')
+                  .replace(/&#39;/g, "'")
+                  .replace(/&[a-z]+;/gi, ' ')
+                  .replace(/\s+/g, ' ') // Replace multiple spaces/newlines with single space
+                  .trim();
+                
+                // Find first meaningful text - skip initial empty content
+                let previewText = textContent;
+                // Remove leading non-text characters
+                previewText = previewText.replace(/^[\s\n\r\t\u200B-\u200D\uFEFF]+/, '');
+                previewText = previewText.substring(0, 250).trim();
                 
                 // Show preview of HTML email
-                return (
-                  <div className="email-body">
-                    <div className="email-text-body">
-                      {previewText || 'תוכן HTML של האימייל'}
-                      {textContent.length > 200 && '...'}
+                if (previewText.length > 0) {
+                  return (
+                    <div className="email-body">
+                      <div className="email-text-body">
+                        {previewText}
+                        {textContent.length > 300 && '...'}
+                      </div>
                     </div>
-                    <div className="email-html-preview" style={{ marginTop: '10px', fontSize: '0.85em', color: '#999' }}>
-                      (תוכן HTML מלא זמין)
-                    </div>
-                  </div>
-                );
+                  );
+                }
               } 
               
               // Fallback to text body
