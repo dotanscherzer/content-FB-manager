@@ -16,6 +16,8 @@ export const getNewsletterTopics = async (req, res) => {
 
     const total = await NewsletterTopic.countDocuments();
 
+    console.log(`Found ${topics.length} topics out of ${total} total`);
+
     res.json({
       data: topics,
       pagination: {
@@ -26,6 +28,7 @@ export const getNewsletterTopics = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Error fetching topics:', error);
     res.status(500).json({ error: error.message });
   }
 };

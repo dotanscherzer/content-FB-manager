@@ -102,8 +102,12 @@
 
 1. חזור ל-Render Dashboard
 2. עבור ל-Environment Variables
-3. עדכן את `FRONTEND_URL` להיות ה-URL של Netlify
-4. Render יבצע re-deploy אוטומטי
+3. **הוסף או עדכן** את `FRONTEND_URL` להיות ה-URL של Netlify
+   - **⚠️ חשוב:** ה-URL חייב להתחיל ב-`https://` ולהסתיים ב-`.netlify.app` (ללא `/` בסוף)
+   - דוגמה: `https://rainbow-tulumba-1de9ba.netlify.app`
+4. Render יבצע re-deploy אוטומטי (זה יכול לקחת 2-3 דקות)
+
+**📖 אם יש שגיאת CORS:** ראה [CORS_FIX.md](CORS_FIX.md) לפתרון מפורט
 
 ---
 

@@ -11,6 +11,9 @@ export const getFbPosts = async (req, res) => {
       .limit(parseInt(limit))
       .lean();
 
+    const total = await FbPost.countDocuments();
+    console.log(`Found ${posts.length} posts out of ${total} total`);
+
     // Convert Binary image to base64 string
     const postsWithBase64 = posts.map(post => {
       if (post.image) {
@@ -30,8 +33,6 @@ export const getFbPosts = async (req, res) => {
       }
       return post;
     });
-
-    const total = await FbPost.countDocuments();
 
     res.json({
       data: postsWithBase64,
