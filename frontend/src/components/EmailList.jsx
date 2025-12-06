@@ -58,7 +58,9 @@ const EmailList = () => {
           {emails.map((email) => (
           <div key={email._id} className="email-card">
             <div className="email-header">
-              <h3>{email.Subject || 'ללא נושא'}</h3>
+              <div className="email-title-section">
+                <h3>{email.Subject || 'ללא נושא'}</h3>
+              </div>
               <span className="email-id">ID: {email.ID}</span>
             </div>
             <div className="email-info">
@@ -66,9 +68,28 @@ const EmailList = () => {
               <p><strong>נשלח ב:</strong> {email.sent_at ? new Date(email.sent_at).toLocaleString('he-IL') : 'לא זמין'}</p>
               <p><strong>נוצר ב:</strong> {email.created_at ? new Date(email.created_at).toLocaleString('he-IL') : 'לא זמין'}</p>
             </div>
-            {email.body && (
+            {(email.body || email.html_body) && (
               <div className="email-body">
-                <p>{email.body.substring(0, 200)}...</p>
+                {email.html_body ? (
+                  <div 
+                    className="email-html-body"
+                    dangerouslySetInnerHTML={{ __html: email.html_body.substring(0, 500) + '...' }}
+                  />
+                ) : (
+                  <div className="email-text-body">
+                    {email.body
+                      .replace(/&zwnj;/g, ' ')
+                      .replace(/&nbsp;/g, ' ')
+                      .replace(/&amp;/g, '&')
+                      .replace(/&lt;/g, '<')
+                      .replace(/&gt;/g, '>')
+                      .replace(/&quot;/g, '"')
+                      .replace(/&#39;/g, "'")
+                      .trim()
+                      .substring(0, 200)}
+                    {email.body.length > 200 && '...'}
+                  </div>
+                )}
               </div>
             )}
           </div>

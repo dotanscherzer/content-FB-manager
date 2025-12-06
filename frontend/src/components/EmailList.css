@@ -37,8 +37,8 @@
 .email-header h3 {
   color: #2c3e50;
   font-size: 1.2em;
-  flex: 1;
-  margin-left: 15px;
+  margin: 0;
+  line-height: 1.4;
 }
 
 .email-id {
@@ -51,8 +51,14 @@
 }
 
 .email-info p {
-  margin: 5px 0;
+  margin: 8px 0;
   color: #555;
+  font-size: 0.95em;
+}
+
+.email-info p strong {
+  color: #333;
+  margin-left: 5px;
 }
 
 .email-body {
@@ -61,6 +67,37 @@
   border-top: 1px solid #f0f0f0;
   color: #666;
   line-height: 1.6;
+  max-height: 300px;
+  overflow: hidden;
+  position: relative;
+}
+
+.email-text-body {
+  color: #555;
+  font-size: 0.95em;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.email-html-body {
+  color: #555;
+  font-size: 0.95em;
+  max-height: 250px;
+  overflow: hidden;
+}
+
+.email-html-body img {
+  max-width: 100%;
+  height: auto;
+}
+
+.email-html-body p {
+  margin: 0.5em 0;
+}
+
+.email-title-section {
+  flex: 1;
+  margin-left: 15px;
 }
 
 .pagination {
