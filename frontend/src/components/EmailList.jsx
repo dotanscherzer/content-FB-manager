@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { emailService } from '../services/api';
+import FilterPanel from './FilterPanel';
 import './EmailList.css';
 
 const EmailList = () => {
@@ -8,16 +9,25 @@ const EmailList = () => {
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
   const [expandedEmails, setExpandedEmails] = useState(new Set());
+  const [filters, setFilters] = useState({});
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   useEffect(() => {
-    fetchEmails(pagination.page);
-  }, []);
+    fetchEmails(1); // Reset to page 1 when filters/sort change
+  }, [filters, sortBy, sortOrder]);
+
+  useEffect(() => {
+    if (pagination.page > 0) {
+      fetchEmails(pagination.page);
+    }
+  }, [pagination.page]);
 
   const fetchEmails = async (page) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await emailService.getEmails(page, pagination.limit);
+      const response = await emailService.getEmails(page, pagination.limit, { filters, sortBy, sortOrder });
       
       // Check if response structure is correct
       if (response && response.data) {
@@ -37,8 +47,19 @@ const EmailList = () => {
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
-      fetchEmails(newPage);
+      setPagination(prev => ({ ...prev, page: newPage }));
     }
+  };
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const handleSortChange = (field, order) => {
+    setSortBy(field);
+    setSortOrder(order);
+    setPagination(prev => ({ ...prev, page: 1 }));
   };
 
   const toggleEmailExpansion = (emailId) => {
@@ -61,9 +82,39 @@ const EmailList = () => {
     return <div className="error">שגיאה: {error}</div>;
   }
 
+  const sortOptions = [
+    { value: 'created_at', label: 'תאריך יצירה' },
+    { value: 'sent_at', label: 'תאריך שליחה' },
+    { value: 'Subject', label: 'נושא' },
+    { value: 'sender_email', label: 'שולח' }
+  ];
+
+  const filterFields = [
+    {
+      name: 'Subject',
+      label: 'נושא',
+      type: 'text',
+      placeholder: 'חפש בנושא'
+    },
+    {
+      name: 'sender_email',
+      label: 'שולח',
+      type: 'text',
+      placeholder: 'חפש בשולח'
+    }
+  ];
+
   return (
     <div className="email-list">
-      <h2>אימיילים ({pagination.total})</h2>
+      <div className="email-list-header">
+        <h2>אימיילים ({pagination.total})</h2>
+        <FilterPanel
+          onFilterChange={handleFilterChange}
+          onSortChange={handleSortChange}
+          sortOptions={sortOptions}
+          filterFields={filterFields}
+        />
+      </div>
       {emails.length === 0 ? (
         <div className="no-data">אין אימיילים להצגה</div>
       ) : (

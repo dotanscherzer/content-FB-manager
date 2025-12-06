@@ -10,20 +10,56 @@ const api = axios.create({
 });
 
 export const emailService = {
-  getEmails: (page = 1, limit = 20) => {
-    return api.get('/api/emails', { params: { page, limit } });
+  getEmails: (page = 1, limit = 20, options = {}) => {
+    const params = { page, limit };
+    if (options.sortBy) {
+      params.sortBy = options.sortBy;
+      params.sortOrder = options.sortOrder || 'desc';
+    }
+    if (options.filters) {
+      Object.keys(options.filters).forEach(key => {
+        if (options.filters[key]) {
+          params[`filter[${key}]`] = options.filters[key];
+        }
+      });
+    }
+    return api.get('/api/emails', { params });
   },
 };
 
 export const fbPostService = {
-  getFbPosts: (page = 1, limit = 20) => {
-    return api.get('/api/fb-posts', { params: { page, limit } });
+  getFbPosts: (page = 1, limit = 20, options = {}) => {
+    const params = { page, limit };
+    if (options.sortBy) {
+      params.sortBy = options.sortBy;
+      params.sortOrder = options.sortOrder || 'desc';
+    }
+    if (options.filters) {
+      Object.keys(options.filters).forEach(key => {
+        if (options.filters[key]) {
+          params[`filter[${key}]`] = options.filters[key];
+        }
+      });
+    }
+    return api.get('/api/fb-posts', { params });
   },
 };
 
 export const newsletterTopicService = {
-  getNewsletterTopics: (page = 1, limit = 20) => {
-    return api.get('/api/newsletter-topics', { params: { page, limit } });
+  getNewsletterTopics: (page = 1, limit = 20, options = {}) => {
+    const params = { page, limit };
+    if (options.sortBy) {
+      params.sortBy = options.sortBy;
+      params.sortOrder = options.sortOrder || 'desc';
+    }
+    if (options.filters) {
+      Object.keys(options.filters).forEach(key => {
+        if (options.filters[key]) {
+          params[`filter[${key}]`] = options.filters[key];
+        }
+      });
+    }
+    return api.get('/api/newsletter-topics', { params });
   },
   triggerMakeWebhook: (id) => {
     return api.post(`/api/newsletter-topics/${id}/trigger-make`);

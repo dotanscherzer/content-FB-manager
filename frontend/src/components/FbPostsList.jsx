@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fbPostService } from '../services/api';
+import FilterPanel from './FilterPanel';
 import './FbPostsList.css';
 
 const FbPostsList = () => {
@@ -7,16 +8,25 @@ const FbPostsList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
+  const [filters, setFilters] = useState({});
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   useEffect(() => {
-    fetchPosts(pagination.page);
-  }, []);
+    fetchPosts(1); // Reset to page 1 when filters/sort change
+  }, [filters, sortBy, sortOrder]);
+
+  useEffect(() => {
+    if (pagination.page > 0) {
+      fetchPosts(pagination.page);
+    }
+  }, [pagination.page]);
 
   const fetchPosts = async (page) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fbPostService.getFbPosts(page, pagination.limit);
+      const response = await fbPostService.getFbPosts(page, pagination.limit, { filters, sortBy, sortOrder });
       
       if (response && response.data) {
         setPosts(response.data.data || []);
@@ -35,8 +45,19 @@ const FbPostsList = () => {
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
-      fetchPosts(newPage);
+      setPagination(prev => ({ ...prev, page: newPage }));
     }
+  };
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const handleSortChange = (field, order) => {
+    setSortBy(field);
+    setSortOrder(order);
+    setPagination(prev => ({ ...prev, page: 1 }));
   };
 
   if (loading) {
@@ -47,9 +68,38 @@ const FbPostsList = () => {
     return <div className="error">שגיאה: {error}</div>;
   }
 
+  const sortOptions = [
+    { value: 'created_at', label: 'תאריך יצירה' },
+    { value: 'post_title', label: 'כותרת' },
+    { value: 'topic_title', label: 'נושא' }
+  ];
+
+  const filterFields = [
+    {
+      name: 'post_title',
+      label: 'כותרת',
+      type: 'text',
+      placeholder: 'חפש בכותרת'
+    },
+    {
+      name: 'topic_title',
+      label: 'נושא',
+      type: 'text',
+      placeholder: 'חפש בנושא'
+    }
+  ];
+
   return (
     <div className="fb-posts-list">
-      <h2>פוסטים בפייסבוק ({pagination.total})</h2>
+      <div className="fb-posts-list-header">
+        <h2>פוסטים בפייסבוק ({pagination.total})</h2>
+        <FilterPanel
+          onFilterChange={handleFilterChange}
+          onSortChange={handleSortChange}
+          sortOptions={sortOptions}
+          filterFields={filterFields}
+        />
+      </div>
       {posts.length === 0 ? (
         <div className="no-data">אין פוסטים להצגה</div>
       ) : (

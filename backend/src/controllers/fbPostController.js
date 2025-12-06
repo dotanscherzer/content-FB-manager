@@ -2,16 +2,33 @@ import FbPost from '../models/FbPost.js';
 
 export const getFbPosts = async (req, res) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 20, sortBy = 'created_at', sortOrder = 'desc' } = req.query;
     const skip = (page - 1) * limit;
 
-    const posts = await FbPost.find()
-      .sort({ created_at: -1 })
+    // Build filter query
+    const filterQuery = {};
+    Object.keys(req.query).forEach(key => {
+      if (key.startsWith('filter[') && key.endsWith(']')) {
+        const field = key.slice(7, -1);
+        const value = req.query[key];
+        if (value) {
+          filterQuery[field] = new RegExp(value, 'i');
+        }
+      }
+    });
+
+    // Build sort object
+    const sortField = sortBy || 'created_at';
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+    const sort = { [sortField]: sortDirection };
+
+    const posts = await FbPost.find(filterQuery)
+      .sort(sort)
       .skip(skip)
       .limit(parseInt(limit))
       .lean();
 
-    const total = await FbPost.countDocuments();
+    const total = await FbPost.countDocuments(filterQuery);
     console.log(`Found ${posts.length} posts out of ${total} total`);
 
     // Convert Binary image to base64 string

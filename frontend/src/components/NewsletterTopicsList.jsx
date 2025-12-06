@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { newsletterTopicService } from '../services/api';
+import FilterPanel from './FilterPanel';
 import './NewsletterTopicsList.css';
 
 const NewsletterTopicsList = () => {
@@ -9,16 +10,29 @@ const NewsletterTopicsList = () => {
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
   const [triggeringId, setTriggeringId] = useState(null);
   const [triggerMessage, setTriggerMessage] = useState(null);
+  const [filters, setFilters] = useState({});
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
+
+  useEffect(() => {
+    fetchTopics(1); // Reset to page 1 when filters/sort change
+  }, [filters, sortBy, sortOrder]);
+
+  useEffect(() => {
+    if (pagination.page > 0) {
+      fetchTopics(pagination.page);
+    }
+  }, [pagination.page]);
 
   useEffect(() => {
     fetchTopics(pagination.page);
-  }, []);
+  }, [pagination.page]);
 
   const fetchTopics = async (page) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await newsletterTopicService.getNewsletterTopics(page, pagination.limit);
+      const response = await newsletterTopicService.getNewsletterTopics(page, pagination.limit, { filters, sortBy, sortOrder });
       
       if (response && response.data) {
         setTopics(response.data.data || []);
@@ -37,8 +51,19 @@ const NewsletterTopicsList = () => {
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
-      fetchTopics(newPage);
+      setPagination(prev => ({ ...prev, page: newPage }));
     }
+  };
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const handleSortChange = (field, order) => {
+    setSortBy(field);
+    setSortOrder(order);
+    setPagination(prev => ({ ...prev, page: 1 }));
   };
 
   const handleTriggerMake = async (topicId) => {
@@ -66,15 +91,54 @@ const NewsletterTopicsList = () => {
     return <div className="error">שגיאה: {error}</div>;
   }
 
+  const sortOptions = [
+    { value: 'created_at', label: 'תאריך יצירה' },
+    { value: 'topic_title', label: 'כותרת נושא' },
+    { value: 'topic_score', label: 'ציון' },
+    { value: 'topic_type', label: 'סוג' }
+  ];
+
+  const filterFields = [
+    {
+      name: 'topic_title',
+      label: 'כותרת',
+      type: 'text',
+      placeholder: 'חפש בכותרת'
+    },
+    {
+      name: 'topic_type',
+      label: 'סוג',
+      type: 'text',
+      placeholder: 'חפש בסוג'
+    },
+    {
+      name: 'topic_key',
+      label: 'מפתח נושא',
+      type: 'text',
+      placeholder: 'חפש במפתח'
+    }
+  ];
+
   return (
     <div className="newsletter-topics-list">
-      <h2>נושאי ניוזלטר ({pagination.total})</h2>
+      <div className="newsletter-topics-list-header">
+        <h2>נושאי ניוזלטר ({pagination.total})</h2>
+        <FilterPanel
+          onFilterChange={handleFilterChange}
+          onSortChange={handleSortChange}
+          sortOptions={sortOptions}
+          filterFields={filterFields}
+        />
+      </div>
       {triggerMessage && (
         <div className={`trigger-message ${triggerMessage.type}`}>
           {triggerMessage.text}
         </div>
       )}
-      <div className="topics-container">
+      {topics.length === 0 ? (
+        <div className="no-data">אין נושאים להצגה</div>
+      ) : (
+        <div className="topics-container">
         {topics.map((topic) => (
           <div key={topic._id} className="topic-card">
             <div className="topic-header">
@@ -116,7 +180,7 @@ const NewsletterTopicsList = () => {
               </div>
             )}
           </div>
-          ))}
+        ))}
         </div>
       )}
       {pagination.totalPages > 0 && (

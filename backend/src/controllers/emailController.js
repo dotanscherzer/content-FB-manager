@@ -2,16 +2,33 @@ import Email from '../models/Email.js';
 
 export const getEmails = async (req, res) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 20, sortBy = 'created_at', sortOrder = 'desc' } = req.query;
     const skip = (page - 1) * limit;
 
+    // Build filter query
+    const filterQuery = {};
+    Object.keys(req.query).forEach(key => {
+      if (key.startsWith('filter[') && key.endsWith(']')) {
+        const field = key.slice(7, -1);
+        const value = req.query[key];
+        if (value) {
+          filterQuery[field] = new RegExp(value, 'i'); // Case-insensitive search
+        }
+      }
+    });
+
+    // Build sort object
+    const sortField = sortBy || 'created_at';
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+    const sort = { [sortField]: sortDirection };
+
     // Try to find emails
-    const emails = await Email.find()
-      .sort({ created_at: -1 })
+    const emails = await Email.find(filterQuery)
+      .sort(sort)
       .skip(skip)
       .limit(parseInt(limit));
 
-    const total = await Email.countDocuments();
+    const total = await Email.countDocuments(filterQuery);
 
     console.log(`Found ${emails.length} emails out of ${total} total`);
     
