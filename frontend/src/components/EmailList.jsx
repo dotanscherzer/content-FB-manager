@@ -130,7 +130,7 @@ const EmailList = () => {
                   const displayText = isExpanded ? textContent : previewText;
                   
                   return (
-                    <div className="email-body">
+                    <div className={`email-body ${isExpanded ? 'expanded' : ''}`}>
                       <div className="email-text-body">
                         {displayText}
                         {!isExpanded && shouldShowExpand && '...'}
@@ -170,7 +170,7 @@ const EmailList = () => {
                   const displayText = isExpanded ? cleanedBody : (shouldShowExpand ? cleanedBody.substring(0, 200) : cleanedBody);
                   
                   return (
-                    <div className="email-body">
+                    <div className={`email-body ${isExpanded ? 'expanded' : ''}`}>
                       <div className="email-text-body">
                         {displayText}
                         {!isExpanded && shouldShowExpand && '...'}

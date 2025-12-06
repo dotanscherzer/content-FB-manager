@@ -85,9 +85,17 @@
   border-top: 1px solid #f0f0f0;
   color: #666;
   line-height: 1.6;
+  position: relative;
+}
+
+.email-body:not(.expanded) {
   max-height: 300px;
   overflow: hidden;
-  position: relative;
+}
+
+.email-body.expanded {
+  max-height: none;
+  overflow: visible;
 }
 
 .email-text-body {
@@ -96,8 +104,16 @@
   white-space: pre-wrap;
   word-wrap: break-word;
   line-height: 1.6;
+}
+
+.email-body:not(.expanded) .email-text-body {
   max-height: 200px;
   overflow: hidden;
+}
+
+.email-body.expanded .email-text-body {
+  max-height: none;
+  overflow: visible;
 }
 
 .email-html-body {
