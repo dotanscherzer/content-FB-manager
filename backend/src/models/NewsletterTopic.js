@@ -27,6 +27,9 @@ const newsletterTopicSchema = new mongoose.Schema({
   },
   fb_post_id: {
     type: String
+  },
+  status: {
+    type: String
   }
 }, {
   collection: 'newsletter_topics',

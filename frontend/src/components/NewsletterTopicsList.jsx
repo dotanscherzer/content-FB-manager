@@ -91,6 +91,7 @@ const NewsletterTopicsList = () => {
               <p><strong>מפתח נושא:</strong> {topic.topic_key}</p>
               <p><strong>Email ID:</strong> {topic.email_id}</p>
               <p><strong>FB Post ID:</strong> {topic.fb_post_id || 'לא זמין'}</p>
+              {topic.status && <p><strong>סטטוס:</strong> {topic.status}</p>}
               <p><strong>נוצר ב:</strong> {topic.created_at ? new Date(topic.created_at).toLocaleString('he-IL') : 'לא זמין'}</p>
             </div>
             <div className="topic-details">
