@@ -61,7 +61,7 @@ const EmailList = () => {
               <div className="email-title-section">
                 <h3>{email.Subject || 'ללא נושא'}</h3>
               </div>
-              <span className="email-id">ID: {email.ID}</span>
+              <div className="email-id">ID: {email.ID}</div>
             </div>
             <div className="email-info">
               <p><strong>שולח:</strong> {email.Sender_name || email.sender_email}</p>
