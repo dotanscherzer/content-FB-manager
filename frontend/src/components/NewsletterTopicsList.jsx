@@ -116,6 +116,12 @@ const NewsletterTopicsList = () => {
       label: 'מפתח נושא',
       type: 'text',
       placeholder: 'חפש במפתח'
+    },
+    {
+      name: 'status',
+      label: 'סטטוס',
+      type: 'text',
+      placeholder: 'חפש בסטטוס'
     }
   ];
 
