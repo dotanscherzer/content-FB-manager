@@ -7,6 +7,7 @@ const EmailList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
+  const [expandedEmails, setExpandedEmails] = useState(new Set());
 
   useEffect(() => {
     fetchEmails(pagination.page);
@@ -38,6 +39,18 @@ const EmailList = () => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
       fetchEmails(newPage);
     }
+  };
+
+  const toggleEmailExpansion = (emailId) => {
+    setExpandedEmails(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(emailId)) {
+        newSet.delete(emailId);
+      } else {
+        newSet.add(emailId);
+      }
+      return newSet;
+    });
   };
 
   if (loading) {
@@ -112,12 +125,24 @@ const EmailList = () => {
                 
                 // Show preview of HTML email
                 if (previewText.length > 0) {
+                  const isExpanded = expandedEmails.has(email._id.toString());
+                  const shouldShowExpand = textContent.length > 250;
+                  const displayText = isExpanded ? textContent : previewText;
+                  
                   return (
                     <div className="email-body">
                       <div className="email-text-body">
-                        {previewText}
-                        {textContent.length > 300 && '...'}
+                        {displayText}
+                        {!isExpanded && shouldShowExpand && '...'}
                       </div>
+                      {shouldShowExpand && (
+                        <button 
+                          className="expand-text-btn"
+                          onClick={() => toggleEmailExpansion(email._id.toString())}
+                        >
+                          {isExpanded ? 'הצג פחות' : 'הצג עוד'}
+                        </button>
+                      )}
                     </div>
                   );
                 }
@@ -140,14 +165,24 @@ const EmailList = () => {
                 
                 // Show content even if it's mostly whitespace (after cleaning)
                 if (cleanedBody.length > 0) {
-                  const preview = cleanedBody.length > 200 
-                    ? cleanedBody.substring(0, 200) + '...' 
-                    : cleanedBody;
+                  const isExpanded = expandedEmails.has(email._id.toString());
+                  const shouldShowExpand = cleanedBody.length > 200;
+                  const displayText = isExpanded ? cleanedBody : (shouldShowExpand ? cleanedBody.substring(0, 200) : cleanedBody);
+                  
                   return (
                     <div className="email-body">
                       <div className="email-text-body">
-                        {preview}
+                        {displayText}
+                        {!isExpanded && shouldShowExpand && '...'}
                       </div>
+                      {shouldShowExpand && (
+                        <button 
+                          className="expand-text-btn"
+                          onClick={() => toggleEmailExpansion(email._id.toString())}
+                        >
+                          {isExpanded ? 'הצג פחות' : 'הצג עוד'}
+                        </button>
+                      )}
                     </div>
                   );
                 } else {
