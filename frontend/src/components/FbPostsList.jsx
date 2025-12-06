@@ -15,12 +15,19 @@ const FbPostsList = () => {
   const fetchPosts = async (page) => {
     try {
       setLoading(true);
-      const response = await fbPostService.getFbPosts(page, pagination.limit);
-      setPosts(response.data.data);
-      setPagination(response.data.pagination);
       setError(null);
+      const response = await fbPostService.getFbPosts(page, pagination.limit);
+      
+      if (response && response.data) {
+        setPosts(response.data.data || []);
+        setPagination(response.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
+      } else {
+        setError('תגובה לא תקינה מהשרת');
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'שגיאה בטעינת הפוסטים');
+      console.error('Error fetching posts:', err);
+      const errorMessage = err.response?.data?.error || err.message || 'שגיאה בטעינת הפוסטים';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -43,8 +50,11 @@ const FbPostsList = () => {
   return (
     <div className="fb-posts-list">
       <h2>פוסטים בפייסבוק ({pagination.total})</h2>
-      <div className="posts-container">
-        {posts.map((post) => (
+      {posts.length === 0 ? (
+        <div className="no-data">אין פוסטים להצגה</div>
+      ) : (
+        <div className="posts-container">
+          {posts.map((post) => (
           <div key={post._id} className="post-card">
             <div className="post-header">
               <h3>{post.post_title || 'ללא כותרת'}</h3>
@@ -69,9 +79,11 @@ const FbPostsList = () => {
               </div>
             )}
           </div>
-        ))}
-      </div>
-      <div className="pagination">
+          ))}
+        </div>
+      )}
+      {pagination.totalPages > 0 && (
+        <div className="pagination">
         <button 
           onClick={() => handlePageChange(pagination.page - 1)} 
           disabled={pagination.page === 1}
@@ -85,7 +97,8 @@ const FbPostsList = () => {
         >
           הבא
         </button>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

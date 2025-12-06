@@ -15,12 +15,20 @@ const EmailList = () => {
   const fetchEmails = async (page) => {
     try {
       setLoading(true);
-      const response = await emailService.getEmails(page, pagination.limit);
-      setEmails(response.data.data);
-      setPagination(response.data.pagination);
       setError(null);
+      const response = await emailService.getEmails(page, pagination.limit);
+      
+      // Check if response structure is correct
+      if (response && response.data) {
+        setEmails(response.data.data || []);
+        setPagination(response.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
+      } else {
+        setError('תגובה לא תקינה מהשרת');
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'שגיאה בטעינת האימיילים');
+      console.error('Error fetching emails:', err);
+      const errorMessage = err.response?.data?.error || err.message || 'שגיאה בטעינת האימיילים';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -43,8 +51,11 @@ const EmailList = () => {
   return (
     <div className="email-list">
       <h2>אימיילים ({pagination.total})</h2>
-      <div className="emails-container">
-        {emails.map((email) => (
+      {emails.length === 0 ? (
+        <div className="no-data">אין אימיילים להצגה</div>
+      ) : (
+        <div className="emails-container">
+          {emails.map((email) => (
           <div key={email._id} className="email-card">
             <div className="email-header">
               <h3>{email.Subject || 'ללא נושא'}</h3>
@@ -61,9 +72,11 @@ const EmailList = () => {
               </div>
             )}
           </div>
-        ))}
-      </div>
-      <div className="pagination">
+          ))}
+        </div>
+      )}
+      {pagination.totalPages > 0 && (
+        <div className="pagination">
         <button 
           onClick={() => handlePageChange(pagination.page - 1)} 
           disabled={pagination.page === 1}
@@ -77,7 +90,8 @@ const EmailList = () => {
         >
           הבא
         </button>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -100,3 +100,13 @@
   color: #e74c3c;
 }
 
+.no-data {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.1em;
+  color: #7f8c8d;
+  background: white;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+

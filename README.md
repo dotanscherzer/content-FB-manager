@@ -94,6 +94,8 @@ npm run dev
 
 **📖 לקובץ הוראות מפורט: ראה [DEPLOYMENT.md](DEPLOYMENT.md)**
 
+**🧪 לבדיקת המערכת לאחר Deployment: ראה [TESTING.md](TESTING.md)**
+
 ### סיכום קצר:
 
 1. **העלה את הקוד ל-GitHub** (ראה DEPLOYMENT.md לפרטים)

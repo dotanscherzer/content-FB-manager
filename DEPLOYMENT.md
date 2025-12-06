@@ -19,13 +19,25 @@
 
 2. לחץ על **"New +"** → **"Web Service"**
 
-3. בחר את ה-repository שיצרת (`content-FB-manager`)
+3. **בחירת Source Code - זה החלק החשוב!**
+   
+   **⚠️ חשוב:** אל תלחץ על "Public Git Repository"!
+   
+   במקום זה:
+   - לחץ על הטאב **"Git Provider"** (הטאב הראשון, בצד שמאל)
+   - אם אתה לא רואה את הטאב הזה, זה אומר שעדיין לא חיברת את חשבון GitHub שלך
+   - לחץ על **"Connect GitHub"** או **"Connect account"** וחבר את חשבון GitHub שלך
+   - לאחר החיבור, תראה רשימה של ה-repositories שלך
+   - **בחר את ה-repository שיצרת** (`content-FB-manager`)
 
-4. מלא את הטופס:
+4. **הגדרת השירות:**
+   
+   לאחר שבחרת את ה-repository, תעבור למסך ההגדרות. מלא את השדות הבאים:
+   
    - **Name:** `content-fb-manager-backend` (או כל שם שתרצה)
-   - **Region:** בחר את האזור הקרוב אליך
+   - **Region:** בחר את האזור הקרוב אליך (למשל: Frankfurt, Singapore)
    - **Branch:** `main`
-   - **Root Directory:** `backend` ← **זה חשוב!**
+   - **Root Directory:** `backend` ← **זה חשוב מאוד!** (זה אומר ל-Render לבנות מתוך תיקיית backend)
    - **Runtime:** `Node`
    - **Build Command:** `npm install`
    - **Start Command:** `npm start`

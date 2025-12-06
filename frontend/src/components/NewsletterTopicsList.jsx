@@ -17,12 +17,19 @@ const NewsletterTopicsList = () => {
   const fetchTopics = async (page) => {
     try {
       setLoading(true);
-      const response = await newsletterTopicService.getNewsletterTopics(page, pagination.limit);
-      setTopics(response.data.data);
-      setPagination(response.data.pagination);
       setError(null);
+      const response = await newsletterTopicService.getNewsletterTopics(page, pagination.limit);
+      
+      if (response && response.data) {
+        setTopics(response.data.data || []);
+        setPagination(response.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
+      } else {
+        setError('תגובה לא תקינה מהשרת');
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'שגיאה בטעינת הנושאים');
+      console.error('Error fetching topics:', err);
+      const errorMessage = err.response?.data?.error || err.message || 'שגיאה בטעינת הנושאים';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -108,9 +115,11 @@ const NewsletterTopicsList = () => {
               </div>
             )}
           </div>
-        ))}
-      </div>
-      <div className="pagination">
+          ))}
+        </div>
+      )}
+      {pagination.totalPages > 0 && (
+        <div className="pagination">
         <button 
           onClick={() => handlePageChange(pagination.page - 1)} 
           disabled={pagination.page === 1}
@@ -124,7 +133,8 @@ const NewsletterTopicsList = () => {
         >
           הבא
         </button>
-      </div>
+        </div>
+      )}
     </div>
   );
 };
