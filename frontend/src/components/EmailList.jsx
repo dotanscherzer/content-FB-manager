@@ -72,21 +72,27 @@ const EmailList = () => {
               // Check if we have any content to display
               const rawBody = email.body || '';
               const rawHtmlBody = email.html_body || '';
-              const hasHtmlBody = rawHtmlBody.trim().length > 0;
-              const hasBody = rawBody.trim().length > 0;
+              const hasHtmlBody = rawHtmlBody && rawHtmlBody.trim().length > 0;
+              const hasBody = rawBody && rawBody.trim().length > 0;
               
               // Prefer HTML body if available
               if (hasHtmlBody) {
-                // Only show preview if HTML body is meaningful
-                const htmlPreview = rawHtmlBody.length > 50 
-                  ? rawHtmlBody.substring(0, 500) + '...' 
-                  : rawHtmlBody;
+                // Extract text content from HTML for preview (first 300 chars)
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = rawHtmlBody.substring(0, 1000);
+                const textContent = tempDiv.textContent || tempDiv.innerText || '';
+                const previewText = textContent.substring(0, 200).trim();
+                
+                // Show preview of HTML email
                 return (
                   <div className="email-body">
-                    <div 
-                      className="email-html-body"
-                      dangerouslySetInnerHTML={{ __html: htmlPreview }}
-                    />
+                    <div className="email-text-body">
+                      {previewText || 'תוכן HTML של האימייל'}
+                      {textContent.length > 200 && '...'}
+                    </div>
+                    <div className="email-html-preview" style={{ marginTop: '10px', fontSize: '0.85em', color: '#999' }}>
+                      (תוכן HTML מלא זמין)
+                    </div>
                   </div>
                 );
               } 
