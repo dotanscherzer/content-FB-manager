@@ -7,6 +7,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 seconds timeout
 });
 
 export const emailService = {
@@ -23,7 +24,11 @@ export const emailService = {
         }
       });
     }
-    return api.get('/api/emails', { params });
+    const config = { params };
+    if (options.signal) {
+      config.signal = options.signal;
+    }
+    return api.get('/api/emails', config);
   },
 };
 
@@ -41,7 +46,11 @@ export const fbPostService = {
         }
       });
     }
-    return api.get('/api/fb-posts', { params });
+    const config = { params };
+    if (options.signal) {
+      config.signal = options.signal;
+    }
+    return api.get('/api/fb-posts', config);
   },
 };
 
@@ -59,7 +68,11 @@ export const newsletterTopicService = {
         }
       });
     }
-    return api.get('/api/newsletter-topics', { params });
+    const config = { params };
+    if (options.signal) {
+      config.signal = options.signal;
+    }
+    return api.get('/api/newsletter-topics', config);
   },
   triggerMakeWebhook: (id) => {
     return api.post(`/api/newsletter-topics/${id}/trigger-make`);

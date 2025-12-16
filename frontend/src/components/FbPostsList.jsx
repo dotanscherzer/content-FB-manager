@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { fbPostService } from '../services/api';
 import FilterPanel from './FilterPanel';
 import './FbPostsList.css';
@@ -11,37 +11,64 @@ const FbPostsList = () => {
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
-    fetchPosts(1); // Reset to page 1 when filters/sort change
-  }, [filters, sortBy, sortOrder]);
-
-  useEffect(() => {
-    if (pagination.page > 0) {
-      fetchPosts(pagination.page);
+    // Cancel any pending requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
-  }, [pagination.page]);
 
-  const fetchPosts = async (page) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await fbPostService.getFbPosts(page, pagination.limit, { filters, sortBy, sortOrder });
-      
-      if (response && response.data) {
-        setPosts(response.data.data || []);
-        setPagination(response.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
-      } else {
-        setError('תגובה לא תקינה מהשרת');
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    const fetchPosts = async (page) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fbPostService.getFbPosts(page, pagination.limit, { 
+          filters, 
+          sortBy, 
+          sortOrder,
+          signal 
+        });
+        
+        // Check if request was aborted
+        if (signal.aborted) {
+          return;
+        }
+        
+        if (response && response.data) {
+          setPosts(response.data.data || []);
+          setPagination(response.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
+        } else {
+          setError('תגובה לא תקינה מהשרת');
+        }
+      } catch (err) {
+        // Don't set error if request was aborted
+        if (err.name === 'AbortError' || err.code === 'ERR_CANCELED' || signal.aborted) {
+          return;
+        }
+        console.error('Error fetching posts:', err);
+        const errorMessage = err.response?.data?.error || err.message || 'שגיאה בטעינת הפוסטים';
+        setError(errorMessage);
+      } finally {
+        if (!signal.aborted) {
+          setLoading(false);
+        }
       }
-    } catch (err) {
-      console.error('Error fetching posts:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'שגיאה בטעינת הפוסטים';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchPosts(pagination.page);
+
+    // Cleanup function
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [pagination.page, filters, sortBy, sortOrder, pagination.limit]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {

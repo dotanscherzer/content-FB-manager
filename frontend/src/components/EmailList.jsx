@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { emailService } from '../services/api';
 import FilterPanel from './FilterPanel';
 import './EmailList.css';
@@ -12,38 +12,65 @@ const EmailList = () => {
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
-    fetchEmails(1); // Reset to page 1 when filters/sort change
-  }, [filters, sortBy, sortOrder]);
-
-  useEffect(() => {
-    if (pagination.page > 0) {
-      fetchEmails(pagination.page);
+    // Cancel any pending requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
-  }, [pagination.page]);
 
-  const fetchEmails = async (page) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await emailService.getEmails(page, pagination.limit, { filters, sortBy, sortOrder });
-      
-      // Check if response structure is correct
-      if (response && response.data) {
-        setEmails(response.data.data || []);
-        setPagination(response.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
-      } else {
-        setError('תגובה לא תקינה מהשרת');
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    const fetchEmails = async (page) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await emailService.getEmails(page, pagination.limit, { 
+          filters, 
+          sortBy, 
+          sortOrder,
+          signal 
+        });
+        
+        // Check if request was aborted
+        if (signal.aborted) {
+          return;
+        }
+        
+        // Check if response structure is correct
+        if (response && response.data) {
+          setEmails(response.data.data || []);
+          setPagination(response.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
+        } else {
+          setError('תגובה לא תקינה מהשרת');
+        }
+      } catch (err) {
+        // Don't set error if request was aborted
+        if (err.name === 'AbortError' || err.code === 'ERR_CANCELED' || signal.aborted) {
+          return;
+        }
+        console.error('Error fetching emails:', err);
+        const errorMessage = err.response?.data?.error || err.message || 'שגיאה בטעינת האימיילים';
+        setError(errorMessage);
+      } finally {
+        if (!signal.aborted) {
+          setLoading(false);
+        }
       }
-    } catch (err) {
-      console.error('Error fetching emails:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'שגיאה בטעינת האימיילים';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchEmails(pagination.page);
+
+    // Cleanup function
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [pagination.page, filters, sortBy, sortOrder, pagination.limit]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {

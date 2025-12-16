@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { newsletterTopicService } from '../services/api';
 import FilterPanel from './FilterPanel';
 import './NewsletterTopicsList.css';
@@ -13,41 +13,64 @@ const NewsletterTopicsList = () => {
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
-    fetchTopics(1); // Reset to page 1 when filters/sort change
-  }, [filters, sortBy, sortOrder]);
-
-  useEffect(() => {
-    if (pagination.page > 0) {
-      fetchTopics(pagination.page);
+    // Cancel any pending requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
-  }, [pagination.page]);
 
-  useEffect(() => {
-    fetchTopics(pagination.page);
-  }, [pagination.page]);
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
 
-  const fetchTopics = async (page) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await newsletterTopicService.getNewsletterTopics(page, pagination.limit, { filters, sortBy, sortOrder });
-      
-      if (response && response.data) {
-        setTopics(response.data.data || []);
-        setPagination(response.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
-      } else {
-        setError('תגובה לא תקינה מהשרת');
+    const fetchTopics = async (page) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await newsletterTopicService.getNewsletterTopics(page, pagination.limit, { 
+          filters, 
+          sortBy, 
+          sortOrder,
+          signal 
+        });
+        
+        // Check if request was aborted
+        if (signal.aborted) {
+          return;
+        }
+        
+        if (response && response.data) {
+          setTopics(response.data.data || []);
+          setPagination(response.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
+        } else {
+          setError('תגובה לא תקינה מהשרת');
+        }
+      } catch (err) {
+        // Don't set error if request was aborted
+        if (err.name === 'AbortError' || err.code === 'ERR_CANCELED' || signal.aborted) {
+          return;
+        }
+        console.error('Error fetching topics:', err);
+        const errorMessage = err.response?.data?.error || err.message || 'שגיאה בטעינת הנושאים';
+        setError(errorMessage);
+      } finally {
+        if (!signal.aborted) {
+          setLoading(false);
+        }
       }
-    } catch (err) {
-      console.error('Error fetching topics:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'שגיאה בטעינת הנושאים';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchTopics(pagination.page);
+
+    // Cleanup function
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [pagination.page, filters, sortBy, sortOrder, pagination.limit]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
